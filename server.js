@@ -1,8 +1,13 @@
 const express = require('express');
-const app = express();
+var app = express();
 const mysql = require('mysql2');
 require('dotenv').config();
+var bodyParser = require('body-parser');
 // load environment variables
+
+
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({extended: true}));
 
 const con = mysql.createConnection({
     host: process.env.DB_HOST,
@@ -16,6 +21,26 @@ const con = mysql.createConnection({
 app.get('/', (req, res) => {
 res.send('Hello World');
 });
+
+
+app.post('/login', (req, res) => {
+    var post_data = req.body;
+    var { mail, surname, givenName, id } = post_data;
+
+
+    con.query('SELECT * FROM tbl_user where email = ?', [mail], (err, rows) => {
+        if (err) throw err;
+        if (rows.length > 0){
+            res.json({status: 200, message: 'User Exist'});
+        } else{
+            con.query('INSERT INTO tbl_user (user_id, email, l_name, f_name) VALUES (?, ?, ?, ?)', [id,mail, surname, givenName], (err, rows) => {
+                if (err) throw err;
+                res.json({status: 200, message: 'User Created'});
+            })
+        }
+    })
+
+})
 
 
 app.get('/test', (req, res) => {
