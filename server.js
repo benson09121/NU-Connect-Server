@@ -19,40 +19,60 @@ const con = mysql.createConnection({
 })
 
 
+const authMiddleware = (req, res, next) => {
+    const token = req.headers['authorization']?.split(' ')[1]; // Extract token from "Bearer <token>"
+  
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided' });
+    }
+  
+    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+      if (err) {
+        return res.status(401).json({ message: 'Invalid token' });
+      }
+  
+      req.userId = decoded.id;
+      next();
+    });
+  };
+
+
 app.get('/', (req, res) => {
 res.send('Hello World');
 });
 
 
-void function getUser(mail){
-    con.query('SELECT * FROM tbl_user where email = ?',[mail], (err, rows) => {
-        return rows;
-    })
+function getUser(mail, callback){
+    con.query('SELECT * FROM tbl_user where email = ?', [mail], (err, rows) => {
+        if (err) return callback(err);
+        callback(null, rows);
+    });
 }
 
-void function generateToken(user){
-    return jwt.sign(user, process.env.SECRET_KEY, {expiresIn: '7d'});
+function generateToken(result){
+    const { user_id, email, f_name, l_name } = result[0];
+    result = { user_id, email, f_name, l_name };
+    return jwt.sign({ result }, process.env.JWT_SECRET, { expiresIn: '7d' });
 }
 
 
-app.post('api/mobile/login', (req, res) => {
+app.post('/api/mobile/login', (req, res) => {
     var post_data = req.body;
     var { mail, surname, givenName, id } = post_data;
 
-    con.query('SELECT * FROM tbl_user where email = ?', [mail], (err, result) => {
+    getUser(mail, (err, result) => {
         if (err) throw err;
         if (result.length > 0){
-            const token = generateToken(result.user_id);
-            res.json({status: 200, message: token});
-            
-        } else{
-            con.query('INSERT INTO tbl_user (user_id, email, l_name, f_name) VALUES (?, ?, ?, ?)', [id,mail, surname, givenName], (err, rows) => {
+            console.log(result);
+            const token = generateToken(result);
+            res.json({ status: 200, message: token });
+        } else {
+            con.query('INSERT INTO tbl_user (user_id, email, l_name, f_name) VALUES (?, ?, ?, ?)', [id, mail, surname, givenName], (err, rows) => {
                 if (err) throw err;
-                res.json({status: 200, message: 'User Created'});
-            })
+                res.json({ status: 200, message: 'User Created' });
+            });
         }
-    })
-
+    });
 })
 
 
@@ -67,5 +87,5 @@ app.get('/test', (req, res) => {
 
 
 app.listen(3000, () => {
-    console.log('Server is running at http://localhost:3000');
+    console.log('NU-Connect server is Running~~~');
 })
