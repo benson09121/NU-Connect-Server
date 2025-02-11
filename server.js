@@ -13,8 +13,12 @@ const con = mysql.createConnection({
 })
 
 
-
 app.get('/', (req, res) => {
+res.send('Hello World');
+});
+
+
+app.get('/test', (req, res) => {
     con.query('SELECT * FROM tbl_user', (err, rows) => {
         if (err) throw err;
         res.json(rows);
