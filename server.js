@@ -42,42 +42,48 @@ res.send('Hello World');
 });
 
 
-function getUser(mail, callback){
-    con.query('SELECT * FROM tbl_user where email = ?', [mail], (err, rows) => {
-        if (err) return callback(err);
-        callback(null, rows);
+async function getUser(mail) {
+    return new Promise((resolve, reject) => {
+        con.query('SELECT * FROM tbl_user where email = ?', [mail], (err, rows) => {
+            if (err) return reject(err);
+            resolve(rows);
+        });
     });
 }
 
-function generateToken(email){
-    con.query('SELECT * FROM tbl_user where email = ?', [email], (err, rows) => {
-        if (err) throw err;
-        const { user_id, email, f_name, l_name } = rows[0];
-        const result = { user_id, email, f_name, l_name };
-        return jwt.sign({ result }, process.env.JWT_SECRET, { expiresIn: '7d' });
+async function generateToken(email) {
+    return new Promise((resolve, reject) => {
+        con.query('SELECT * FROM tbl_user where email = ?', [email], (err, rows) => {
+            if (err) return reject(err);
+            const { user_id, email, f_name, l_name } = rows[0];
+            const result = { user_id, email, f_name, l_name };
+            const token = jwt.sign({ result }, process.env.JWT_SECRET, { expiresIn: '7d' });
+            resolve(token);
+        });
     });
 }
 
-app.post('/api/mobile/login', (req, res) => {
-    var post_data = req.body;
-    var { mail, surname, givenName, id } = post_data;
+app.post('/api/mobile/login', async (req, res) => {
+    try {
+        var post_data = req.body;
+        var { mail, surname, givenName, id } = post_data;
 
-    getUser(mail, (err, result) => {
-        if (err) throw err;
-        if (result.length > 0){
+        const result = await getUser(mail);
+        if (result.length > 0) {
             console.log(result);
-            generateToken(result[0].email).then((token) => {
-                res.json({ status: 200, message: "User Authenticated", token: token });
-            });
+            const token = await generateToken(result[0].email);
+            res.json({ status: 200, message: "User Authenticated", token: token });
         } else {
-            con.query('INSERT INTO tbl_user (user_id, email, l_name, f_name) VALUES (?, ?, ?, ?)', [id, mail, surname, givenName], (err, rows) => {
+            con.query('INSERT INTO tbl_user (user_id, email, l_name, f_name) VALUES (?, ?, ?, ?)', [id, mail, surname, givenName], async (err, rows) => {
                 if (err) throw err;
-                const token = generateToken(mail);
+                const token = await generateToken(mail);
                 res.json({ status: 200, message: 'User Created', token: token });
             });
         }
-    });
-})
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
 
 
 app.get('/test', (req, res) => {
