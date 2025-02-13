@@ -66,8 +66,9 @@ app.post('/api/mobile/login', (req, res) => {
         if (err) throw err;
         if (result.length > 0){
             console.log(result);
-            const token = generateToken(result[0].email);
-            res.json({ status: 200, message: "User Authenticated", token: token });
+            generateToken(result[0].email).then((token) => {
+                res.json({ status: 200, message: "User Authenticated", token: token });
+            });
         } else {
             con.query('INSERT INTO tbl_user (user_id, email, l_name, f_name) VALUES (?, ?, ?, ?)', [id, mail, surname, givenName], (err, rows) => {
                 if (err) throw err;
