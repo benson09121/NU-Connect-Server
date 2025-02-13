@@ -49,12 +49,14 @@ function getUser(mail, callback){
     });
 }
 
-function generateToken(result){
-    const { user_id, email, f_name, l_name } = result[0];
-    result = { user_id, email, f_name, l_name };
-    return jwt.sign({ result }, process.env.JWT_SECRET, { expiresIn: '7d' });
+function generateToken(email){
+    con.query('SELECT * FROM tbl_user where email = ?', [email], (err, rows) => {
+        if (err) throw err;
+        const { user_id, email, f_name, l_name } = rows[0];
+        const result = { user_id, email, f_name, l_name };
+        return jwt.sign({ result }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    });
 }
-
 
 app.post('/api/mobile/login', (req, res) => {
     var post_data = req.body;
@@ -64,12 +66,13 @@ app.post('/api/mobile/login', (req, res) => {
         if (err) throw err;
         if (result.length > 0){
             console.log(result);
-            const token = generateToken(result);
-            res.json({ status: 200, message: token });
+            const token = generateToken(result[0].email);
+            res.json({ status: 200, message: "User Authenticated", token: token });
         } else {
             con.query('INSERT INTO tbl_user (user_id, email, l_name, f_name) VALUES (?, ?, ?, ?)', [id, mail, surname, givenName], (err, rows) => {
                 if (err) throw err;
-                res.json({ status: 200, message: 'User Created' });
+                const token = generateToken(mail);
+                res.json({ status: 200, message: 'User Created', token: token });
             });
         }
     });
