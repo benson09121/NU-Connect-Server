@@ -1,101 +1,23 @@
 const express = require('express');
-var app = express();
-const mysql = require('mysql2');
-const jwt = require('jsonwebtoken');
+const bodyParser = require('body-parser');
 require('dotenv').config();
-var bodyParser = require('body-parser');
-// load environment variables
+const db = require('./config/db');
 
+const app = express();
 
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.urlencoded({ extended: true }));
 
-const con = mysql.createConnection({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASS,
-    database: process.env.DB_NAME,
-    ssl: { rejectUnauthorized: false }
-})
+// Import routes
+const indexRoutes = require('./routes/index');
+const authRoutes = require('./routes/auth');
+const facebookRoutes = require('./routes/facebook');
 
-
-const authMiddleware = (req, res, next) => {
-    const token = req.headers['authorization']?.split(' ')[1]; // Extract token from "Bearer <token>"
-  
-    if (!token) {
-      return res.status(401).json({ message: 'No token provided' });
-    }
-  
-    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-      if (err) {
-        return res.status(401).json({ message: 'Invalid token' });
-      }
-  
-      req.userId = decoded.id;
-      next();
-    });
-  };
-
-
-app.get('/', (req, res) => {
-res.send('Hello World');
-});
-
-
-async function getUser(mail) {
-    return new Promise((resolve, reject) => {
-        con.query('SELECT * FROM tbl_user where email = ?', [mail], (err, rows) => {
-            if (err) return reject(err);
-            resolve(rows);
-        });
-    });
-}
-
-async function generateToken(email) {
-    return new Promise((resolve, reject) => {
-        con.query('SELECT * FROM tbl_user where email = ?', [email], (err, rows) => {
-            if (err) return reject(err);
-            const { user_id, email, f_name, l_name } = rows[0];
-            const result = { user_id, email, f_name, l_name };
-            const token = jwt.sign({ result }, process.env.JWT_SECRET, { expiresIn: '7d' });
-            resolve(token);
-        });
-    });
-}
-
-app.post('/api/mobile/login', async (req, res) => {
-    try {
-        var post_data = req.body;
-        var { mail, surname, givenName, id } = post_data;
-
-        const result = await getUser(mail);
-        if (result.length > 0) {
-            console.log(result);
-            const token = await generateToken(result[0].email);
-            res.json({ status: 200, message: "User Authenticated", token: token });
-        } else {
-            con.query('INSERT INTO tbl_user (user_id, email, l_name, f_name) VALUES (?, ?, ?, ?)', [id, mail, surname, givenName], async (err, rows) => {
-                if (err) throw err;
-                const token = await generateToken(mail);
-                res.json({ status: 200, message: 'User Created', token: token });
-            });
-        }
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
-});
-
-
-app.get('/test', (req, res) => {
-    con.query('SELECT * FROM tbl_user', (err, rows) => {
-        if (err) throw err;
-        res.json(rows);
-    })
-})
-
-
-
+// Use routes
+app.use('/', indexRoutes);
+app.use('/api/mobile', authRoutes);
+app.use('/api/mobile', facebookRoutes);
 
 app.listen(3000, () => {
     console.log('NU-Connect server is Running~~~');
-})
+});
