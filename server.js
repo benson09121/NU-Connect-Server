@@ -1,7 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 require('dotenv').config();
-const db = require('./config/db');
+const db = require('./config/db'); // Ensure the database connection is established
 
 const app = express();
 
@@ -12,11 +12,13 @@ app.use(bodyParser.urlencoded({ extended: true }));
 const indexRoutes = require('./routes/index');
 const authRoutes = require('./routes/auth');
 const facebookRoutes = require('./routes/facebook');
+const eventRoutes = require('./routes/events');
 
 // Use routes
 app.use('/', indexRoutes);
 app.use('/api/mobile', authRoutes);
 app.use('/api/mobile', facebookRoutes);
+app.use('/api/mobile', eventRoutes);
 
 app.listen(3000, () => {
     console.log('NU-Connect server is Running~~~');
