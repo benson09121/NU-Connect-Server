@@ -1,12 +1,17 @@
-const con = require('../config/db');
+const con = require("../config/db");
 
 async function getAllEvents() {
-    return new Promise((resolve, reject) => {
-        con.query('SELECT * FROM tbl_event', (err, rows) => {
-            if (err) return reject(err);
-            resolve(rows);
-        });
-    });
+  return new Promise((resolve, reject) => {
+    con.query(
+      `SELECT a.event_id, a.title, a.description, a.start_time, a.end_time, a.date, a.created_at, b.f_name, b.l_name
+FROM tbl_event a
+INNER JOIN tbl_user b ON a.user_id = b.user_id`,
+      (err, rows) => {
+        if (err) return reject(err);
+        resolve(rows);
+      }
+    );
+  });
 }
 
 // async function createEvent(title, description, date) {
@@ -36,4 +41,4 @@ async function getAllEvents() {
 //     });
 // }
 
-module.exports = { getAllEvents};
+module.exports = { getAllEvents };
