@@ -1,7 +1,8 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 require('dotenv').config();
-const db = require('./config/db'); // Ensure the database connection is established
+const db = require('./config/db');
+const { redisClient } = require('./config/redis');
 
 const app = express();
 
@@ -19,6 +20,12 @@ app.use('/', indexRoutes);
 app.use('/api/mobile', authRoutes);
 app.use('/api/mobile', facebookRoutes);
 app.use('/api/mobile', eventRoutes);
+
+// Global error handler for unhandled promise rejections
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+    // Application specific logging, throwing an error, or other logic here
+});
 
 app.listen(3000, () => {
     console.log('NU-Connect server is Running~~~');
