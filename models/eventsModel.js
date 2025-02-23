@@ -23,7 +23,7 @@ async function createEvent(
 ) {
   return new Promise((resolve, reject) => {
     con.query(
-      "INSERT INTO tbl_event (user_id, title, description, venue, date, start_time, end_time) VALUES (?, ?, ?)",
+      "INSERT INTO tbl_event (user_id, title, description, venue, date, start_time, end_time) VALUES (?, ?, ?, ?, ?, ?, ?)",
       [user_id, title, description, venue, date, start_time, end_time],
       (err, result) => {
         if (err) return reject(err);

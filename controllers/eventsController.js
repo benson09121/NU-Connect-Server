@@ -1,5 +1,5 @@
 const eventsModel = require('../models/eventsModel');
-const { redisClient, clients } = require('../config/redis');
+const { redisClient, redisSubscriber, clients } = require('../config/redis');
 
 async function getEvents(req, res) {
     try {
@@ -33,7 +33,7 @@ async function createEvent(req, res) {
     }
 }
 
-redisClient.subscribe('events', (err, count) => {
+redisSubscriber.subscribe('events', (err, count) => {
     if (err) {
         console.error('Redis subscribe error:', err);
         return;
@@ -41,9 +41,10 @@ redisClient.subscribe('events', (err, count) => {
     console.log(`Subscribed to ${count} channels.`);
 });
 
-redisClient.on('message', (channel, message) => {
+redisSubscriber.on('message', (channel, message) => {
     if (channel === 'events') {
         clients.forEach(client => client.write(`data: ${message}\n\n`));
     }
 });
+
 module.exports = { getEvents, getUpdates, createEvent };
