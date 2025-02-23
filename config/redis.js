@@ -1,17 +1,11 @@
-const redis = require('redis');
+const Redis = require('ioredis');
 require('dotenv').config();
 
-const redisClient = redis.createClient({
-    password: process.env.REDIS_PASSWORD,
-    socket: {
-        host: process.env.REDIS_HOST,
-        port: process.env.REDIS_PORT,
-        tls: true,
-    }
-});
-
-redisClient.connect().catch(err => {
-    console.error('Redis connection error:', err);
+const redisClient = new Redis({
+    host: process.env.REDIS_HOST,
+    port: process.env.REDIS_PORT,
+    password: process.env.REDIS_PASS,
+    tls: true,
 });
 
 redisClient.on('error', (err) => {

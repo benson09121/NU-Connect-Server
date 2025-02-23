@@ -26,19 +26,24 @@ async function createEvent(req, res) {
     try {
         const { user_id, title, description, venue, date, start_time, end_time } = req.body;
         const newEvent = await eventsModel.createEvent(user_id, title, description, venue, date, start_time, end_time);
-        redisClient.publish('events_update', JSON.stringify(newEvent)).catch(err => {
-            console.error('Redis publish error:', err);
-        });
+        redisClient.publish('events', JSON.stringify(newEvent));
         res.status(201).json(newEvent);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 }
 
-redisClient.subscribe('events_update', (message) => {
-    clients.forEach(client => client.write(`data: ${message}\n\n`));
-}).catch(err => {
-    console.error('Redis subscribe error:', err);
+redisClient.subscribe('events', (err, count) => {
+    if (err) {
+        console.error('Redis subscribe error:', err);
+        return;
+    }
+    console.log(`Subscribed to ${count} channels.`);
 });
 
+redisClient.on('message', (channel, message) => {
+    if (channel === 'events') {
+        clients.forEach(client => client.write(`data: ${message}\n\n`));
+    }
+});
 module.exports = { getEvents, getUpdates, createEvent };
