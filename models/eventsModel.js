@@ -28,7 +28,6 @@ async function createEvent(
       (err, result) => {
         if (err) return reject(err);
         resolve({
-          id: result.insertId,
           title,
           description,
           venue,
