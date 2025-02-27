@@ -1,8 +1,12 @@
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
+class Auth {
+    static userId = null;
+}
+
 const authMiddleware = (req, res, next) => {
-    const token = req.headers['authorization']?.split(' ')[1]; // Extract token from "Bearer <token>"
+    const token = req.headers['authorization']?.split(' ')[1];
 
     if (!token) {
         return res.status(401).json({ message: 'No token provided' });
@@ -13,9 +17,10 @@ const authMiddleware = (req, res, next) => {
             return res.status(401).json({ message: 'Invalid token' });
         }
 
+        Auth.userId = decoded.id;
         req.userId = decoded.id;
         next();
     });
 };
 
-module.exports = authMiddleware;
+module.exports = { authMiddleware, Auth };
