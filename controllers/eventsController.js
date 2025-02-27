@@ -33,6 +33,18 @@ async function createEvent(req, res) {
     }
 }
 
+async function registerEvent(req, res) {
+    try {
+        const { event_id} = req.body;
+        await eventsModel.registerEvent(event_id);
+        res.status(200).json({ message: 'Event Registered' });
+
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
+
 redisSubscriber.subscribe('events', (err, count) => {
     if (err) {
         console.error('Redis subscribe error:', err);
@@ -47,4 +59,4 @@ redisSubscriber.on('message', (channel, message) => {
     }
 });
 
-module.exports = { getEvents, getUpdates, createEvent };
+module.exports = { getEvents, getUpdates, createEvent, registerEvent };

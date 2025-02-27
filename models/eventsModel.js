@@ -72,4 +72,17 @@ LEFT JOIN tbl_event_attendance c
   });
 }
 
-module.exports = { getAllEvents, createEvent };
+async function registerEvent(event_id) {
+  return new Promise((resolve, reject) => {
+    con.query(
+      "INSERT INTO tbl_event_attendance (event_id, user_id,status) VALUES (?, ?, ?)",
+      [event_id, Auth.get_userId, "Going"],
+      (err, result) => {
+        if (err) return reject(err);
+        resolve(result);
+      }
+    );
+  });
+}
+
+module.exports = { getAllEvents, createEvent, registerEvent };
