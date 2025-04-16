@@ -5,14 +5,14 @@ const redisClient = new Redis({
     host: process.env.REDIS_HOST,
     port: process.env.REDIS_PORT,
     password: process.env.REDIS_PASS,
-    tls: true,
+    tls: false,
 });
 
 const redisSubscriber = new Redis({
     host: process.env.REDIS_HOST,
     port: process.env.REDIS_PORT,
     password: process.env.REDIS_PASS,
-    tls: true,
+    tls: false,
 });
 
 redisClient.on('error', (err) => {
@@ -31,6 +31,4 @@ redisSubscriber.on('connect', () => {
     console.log('Connected to Redis subscriber');
 });
 
-let clients = [];
-
-module.exports = { redisClient, redisSubscriber, clients };
+module.exports = { redisClient, redisSubscriber };
