@@ -10,6 +10,7 @@ router.get('/events/tickets', authMiddleware, eventsController.getTickets);
 router.get('/events/:eventId', authMiddleware, eventsController.sseEventAttendees);
 router.get('/events/:eventId/user/:userId', authMiddleware, eventsController.getSpecificEvent);
 router.get('/events/evaluation/:eventId', authMiddleware, eventsController.getEvaluation);
+router.post('/events/evaluation/submit', authMiddleware, eventsController.submitEvaluation);
 router.post('/events', authMiddleware, eventsController.createEvent);
 router.post('/events/register', authMiddleware, eventsController.registerEvent);
 router.post('/events/addcertificate', authMiddleware, eventsController.addCertificate);

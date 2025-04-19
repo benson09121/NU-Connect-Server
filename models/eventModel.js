@@ -149,7 +149,7 @@ async function AddCertificateTemplate(event_id, filepath) {
         connection.release();
     }
 }
-async function getCertificateTemplate(event_id){
+async function getCertificateTemplate(event_id) {
     const connection = await pool.getConnection();
     try {
         const [rows] = await connection.query('CALL GetCertificateTemplate(?);', [event_id]);
@@ -159,19 +159,20 @@ async function getCertificateTemplate(event_id){
     }
 }
 
-async function addGeneratedCertificate(event_id,template_id, certificate_path, verification_code){
+async function addGeneratedCertificate({ event_id, template_id, pdfPath, verification_code }) {
     const connection = await pool.getConnection();
-    try {
-        const [rows] = await connection.query('CALL AddGeneratedCertificate(?, ?, ?, ?, ?);', [event_id, Auth.get_userId, template_id, certificate_path, verification_code]);
-        return rows[0];
-    } finally {
+    try{
+    const [rows] = await connection.query('CALL AddGeneratedCertificate(?, ?, ?, ?, ?);', [event_id, Auth.get_userId ,template_id, pdfPath, verification_code]); // Ensure only 5 arguments are passed
+    return rows[0];
+    }
+    finally{
         connection.release();
     }
 }
 
-async function getEvaluation(event_id){
+async function getEvaluation(event_id) {
     const connection = await pool.getConnection();
-    try{
+    try {
         const [rows] = await connection.query('CALL GetEvaluationQuestions(?);', [event_id]);
         return rows[0];
     }
@@ -180,6 +181,15 @@ async function getEvaluation(event_id){
     }
 }
 
+async function submitEvaluation(response) {
+    const connection = await pool.getConnection();
+    try {
+        const jsonData = JSON.stringify(response);
+        await connection.query('CALL SubmitEvaluation(?);', [jsonData]);
+    } finally {
+        connection.release();
+    }
+}
 
 module.exports = {
     getAllEvents,
@@ -196,4 +206,5 @@ module.exports = {
     getCertificateTemplate,
     addGeneratedCertificate,
     getEvaluation,
+    submitEvaluation,
 };
